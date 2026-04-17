@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:uber_app/screens/main_page.dart';
+import 'package:uber_app/widgets/progress_dialog.dart';
 import 'login_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -21,24 +23,90 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
 
   void _register() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) =>
+          const ProgressDialog(message: "Registering, Please wait..."),
+    );
+
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Account created successfully!")),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (c) => const MainScreen()),
-      );
+      debugPrint("Starting registration process...");
+      debugPrint("Email: ${emailController.text.trim()}");
+
+      final User? firebaseUser =
+          (await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          )).user;
+
+      debugPrint("Firebase user created: ${firebaseUser?.uid}");
+
+      if (firebaseUser != null) {
+        // Save user info to database
+        Map userMap = {
+          "id": firebaseUser.uid,
+          "name": nameController.text.trim(),
+          "email": emailController.text.trim(),
+          "phone": phoneController.text.trim(),
+          "address": addressController.text.trim(),
+        };
+
+        debugPrint("Attempting to save user data to database...");
+        DatabaseReference userRef = FirebaseDatabase.instance.ref().child(
+          "users",
+        );
+
+        try {
+          await userRef.child(firebaseUser.uid).set(userMap);
+          debugPrint("✓ User data saved successfully!");
+        } catch (dbError) {
+          debugPrint("✗ Database save failed: $dbError");
+          if (!mounted) return;
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Database Error: ${dbError.toString()}\n\nPlease check Firebase Realtime Database rules.",
+              ),
+            ),
+          );
+          return;
+        }
+
+        if (!mounted) return;
+        Navigator.pop(context); // Dismiss dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Account created successfully!")),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (c) => const MainScreen()),
+        );
+      } else {
+        if (!mounted) return;
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registration Error occurred.")),
+        );
+      }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Registration failed")),
-      );
+      Navigator.pop(context); // Dismiss dialog
+
+      debugPrint('Auth failed: ${e.code} - ${e.message}');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Dismiss dialog
+
+      debugPrint('Unexpected error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
   }
 

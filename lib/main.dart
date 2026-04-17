@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:uber_app/firebase_options.dart';
+import 'package:uber_app/info_handler/app_info.dart';
 import 'package:uber_app/screens/splash_screen.dart';
 
 void main() async {
@@ -17,11 +19,14 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Uber App',
-      theme: ThemeData(),
-      debugShowCheckedModeBanner: false,
-      home: const MySplashScreen(),
+    return ChangeNotifierProvider(
+      create: (context) => AppInfo(),
+      child: MaterialApp(
+        title: 'Uber App',
+        theme: ThemeData(),
+        debugShowCheckedModeBanner: false,
+        home: const MySplashScreen(),
+      ),
     );
   }
 }

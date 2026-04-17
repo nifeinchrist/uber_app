@@ -41,48 +41,52 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDkZTKL51pRF5nNkv09rAic0wVkIuF32dg',
-    appId: '1:57411926903:web:b6e5a3651feac0ed6aff72',
-    messagingSenderId: '57411926903',
-    projectId: 'uber-app-5873f',
-    authDomain: 'uber-app-5873f.firebaseapp.com',
-    storageBucket: 'uber-app-5873f.firebasestorage.app',
+    apiKey: 'AIzaSyBRXNr3pGZngwamiS1i_axXxE5CMSWlaQM',
+    appId: '1:888943199862:web:56a2b99cc963aebb634157',
+    messagingSenderId: '888943199862',
+    projectId: 'uber-app-4fa4b',
+    authDomain: 'uber-app-4fa4b.firebaseapp.com',
+    storageBucket: 'uber-app-4fa4b.firebasestorage.app',
+    databaseURL: 'https://uber-app-4fa4b-default-rtdb.firebaseio.com',
     measurementId: 'G-3WJKP3LYQQ',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDiowN09V7arV_cqAX4yvth4xHsd1nJgaU',
-    appId: '1:57411926903:android:8649863fdea405f46aff72',
-    messagingSenderId: '57411926903',
-    projectId: 'uber-app-5873f',
-    storageBucket: 'uber-app-5873f.firebasestorage.app',
+    apiKey: 'AIzaSyBRXNr3pGZngwamiS1i_axXxE5CMSWlaQM',
+    appId: '1:888943199862:android:8649863fdea405f46aff72', // Placeholder - user should verify this
+    messagingSenderId: '888943199862',
+    projectId: 'uber-app-4fa4b',
+    storageBucket: 'uber-app-4fa4b.firebasestorage.app',
+    databaseURL: 'https://uber-app-4fa4b-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBDjdWp-yinQFyZMKTGzqhcL6kHjXN83AU',
-    appId: '1:57411926903:ios:195e3a2ce8ca741b6aff72',
-    messagingSenderId: '57411926903',
-    projectId: 'uber-app-5873f',
-    storageBucket: 'uber-app-5873f.firebasestorage.app',
+    apiKey: 'AIzaSyBRXNr3pGZngwamiS1i_axXxE5CMSWlaQM',
+    appId: '1:888943199862:ios:195e3a2ce8ca741b6aff72', // Placeholder - user should verify this
+    messagingSenderId: '888943199862',
+    projectId: 'uber-app-4fa4b',
+    storageBucket: 'uber-app-4fa4b.firebasestorage.app',
+    databaseURL: 'https://uber-app-4fa4b-default-rtdb.firebaseio.com',
     iosBundleId: 'com.example.uberApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBDjdWp-yinQFyZMKTGzqhcL6kHjXN83AU',
-    appId: '1:57411926903:ios:195e3a2ce8ca741b6aff72',
-    messagingSenderId: '57411926903',
-    projectId: 'uber-app-5873f',
-    storageBucket: 'uber-app-5873f.firebasestorage.app',
+    apiKey: 'AIzaSyBRXNr3pGZngwamiS1i_axXxE5CMSWlaQM',
+    appId: '1:888943199862:ios:195e3a2ce8ca741b6aff72', // Placeholder - user should verify this
+    messagingSenderId: '888943199862',
+    projectId: 'uber-app-4fa4b',
+    storageBucket: 'uber-app-4fa4b.firebasestorage.app',
     iosBundleId: 'com.example.uberApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDkZTKL51pRF5nNkv09rAic0wVkIuF32dg',
-    appId: '1:57411926903:web:1ba91af64452404c6aff72',
-    messagingSenderId: '57411926903',
-    projectId: 'uber-app-5873f',
-    authDomain: 'uber-app-5873f.firebaseapp.com',
-    storageBucket: 'uber-app-5873f.firebasestorage.app',
+    apiKey: 'AIzaSyBRXNr3pGZngwamiS1i_axXxE5CMSWlaQM',
+    appId: '1:888943199862:web:1ba91af64452404c6aff72', // Placeholder - user should verify this
+    messagingSenderId: '888943199862',
+    projectId: 'uber-app-4fa4b',
+    authDomain: 'uber-app-4fa4b.firebaseapp.com',
+    storageBucket: 'uber-app-4fa4b.firebasestorage.app',
+    databaseURL: 'https://uber-app-4fa4b-default-rtdb.firebaseio.com',
     measurementId: 'G-FWENR48S6F',
   );
 }

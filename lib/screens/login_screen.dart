@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:uber_app/screens/main_page.dart';
 import 'registration_screen.dart';
+import 'package:uber_app/widgets/progress_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,22 +15,35 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
   void _login() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => const ProgressDialog(message: "Logging in, please wait..."),
+    );
+
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
       if (!mounted) return;
+      Navigator.pop(context); // Dismiss dialog
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (c) => const MainScreen()),
       );
-    } on FirebaseAuthException catch (e) {
+    } catch (e) {
       if (!mounted) return;
+      Navigator.pop(context); // Dismiss dialog
+
+      String errorMessage = "Login failed. Please check your credentials.";
+      if (e is FirebaseAuthException) {
+        errorMessage = e.message ?? "Authentication failed";
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Login failed")),
+        SnackBar(content: Text(errorMessage)),
       );
     }
   }

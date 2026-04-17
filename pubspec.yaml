@@ -38,6 +38,12 @@ dependencies:
   firebase_auth: ^6.4.0
   email_validator: ^3.0.0
   location: ^8.0.1
+  google_maps_flutter: ^2.5.3
+  firebase_database: ^12.3.0
+  http: ^1.2.2
+  uuid: ^4.5.1
+  provider: ^6.1.2
+
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +69,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/map_styles/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
