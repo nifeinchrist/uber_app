@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../assistants/assistant_methods.dart';
 import '../global/global.dart';
+import '../info_handler/app_info.dart';
 import '../widgets/predicted_place_widget.dart';
 
 class SearchDestinationScreen extends StatefulWidget {
@@ -16,6 +18,17 @@ class _SearchDestinationScreenState extends State<SearchDestinationScreen> {
   TextEditingController destinationTextController = TextEditingController();
 
   List<dynamic> predictedPlaces = [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      String pickUp = Provider.of<AppInfo>(context, listen: false).userPickUpLocation?.locationName ?? "Not getting address";
+      setState(() {
+        pickUpTextController.text = pickUp;
+      });
+    });
+  }
 
   void findPlaceAutoComplete(String searchText) async {
     if (searchText.length > 1) {

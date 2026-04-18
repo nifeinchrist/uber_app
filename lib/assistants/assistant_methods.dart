@@ -9,6 +9,10 @@ import '../models/direction_details.dart';
 import '../models/directions.dart';
 import '../models/place_prediction.dart';
 import '../models/user_model.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../info_handler/app_info.dart';
+import 'package:location/location.dart' as loc;
 
 class AssistantMethods {
   /// Reads the currently logged-in user's info from Firebase and stores it globally.
@@ -24,6 +28,33 @@ class AssistantMethods {
         userModelCurrentInfo = Users.fromSnapshot(snap.snapshot);
       }
     });
+  }
+
+  /// Reverse Geocodes a lat/lng to an address and saves it to AppInfo via Provider.
+  static Future<String> searchAddressForGeographicCoOrdinates(
+      loc.LocationData position, BuildContext context) async {
+    String apiUrl =
+        "https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$googleMapKey";
+    String humanReadableAddress = "";
+    
+    var requestResponse = await receiveRequest(apiUrl);
+
+    if (requestResponse != "error") {
+      var jsonResponse = json.decode(requestResponse);
+      if (jsonResponse['status'] == "OK") {
+        humanReadableAddress = jsonResponse["results"][0]["formatted_address"];
+
+        Directions userPickUpAddress = Directions();
+        userPickUpAddress.locationLatLng = LatLng(position.latitude!, position.longitude!);
+        userPickUpAddress.locationName = humanReadableAddress;
+
+        if (context.mounted) {
+          Provider.of<AppInfo>(context, listen: false)
+              .updatePickUpLocationAddress(userPickUpAddress);
+        }
+      }
+    }
+    return humanReadableAddress;
   }
 
   /// Searches for places using the Google Places Autocomplete API.

@@ -11,6 +11,7 @@ import '../global/global.dart';
 import '../assistants/assistant_methods.dart';
 import '../info_handler/app_info.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -25,6 +26,11 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     AssistantMethods.readCurrentOnlineUserInfo();
   }
+
+  List<LatLng> pLineCoOrdinatesList = [];
+  Set<Polyline> polyLineSet = {};
+  Set<Marker> markersSet = {};
+  Set<Circle> circlesSet = {};
 
   final Completer<GoogleMapController> _controllerGoogleMap = Completer();
   GoogleMapController? newGoogleMapController;
@@ -228,6 +234,113 @@ class _MainScreenState extends State<MainScreen> {
 ''');
   }
 
+  Future<void> drawPolyLineFromOriginToDestination() async {
+    var originPosition = Provider.of<AppInfo>(context, listen: false).userPickUpLocation;
+    var destinationPosition = Provider.of<AppInfo>(context, listen: false).userDropOffLocation;
+
+    if (originPosition == null || destinationPosition == null) return;
+
+    var originLatLng = LatLng(originPosition.locationLatLng!.latitude, originPosition.locationLatLng!.longitude);
+    var destinationLatLng = LatLng(destinationPosition.locationLatLng!.latitude, destinationPosition.locationLatLng!.longitude);
+
+    var directionDetailsInfo = await AssistantMethods.obtainOriginToDestinationDirectionDetails(
+        originLatLng.latitude, originLatLng.longitude,
+        destinationLatLng.latitude, destinationLatLng.longitude
+    );
+
+    if (directionDetailsInfo == null) return;
+
+    List<PointLatLng> decodedPolyLinePointsResultList = PolylinePoints.decodePolyline(directionDetailsInfo.ePoints!);
+
+    pLineCoOrdinatesList.clear();
+
+    if (decodedPolyLinePointsResultList.isNotEmpty) {
+      for (var pointLatLng in decodedPolyLinePointsResultList) {
+        pLineCoOrdinatesList.add(LatLng(pointLatLng.latitude, pointLatLng.longitude));
+      }
+    }
+
+    polyLineSet.clear();
+    markersSet.clear();
+    circlesSet.clear();
+
+    setState(() {
+      Polyline polyline = Polyline(
+        color: Colors.blueAccent,
+        polylineId: const PolylineId("PolylineID"),
+        jointType: JointType.round,
+        points: pLineCoOrdinatesList,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        geodesic: true,
+        width: 5,
+      );
+
+      polyLineSet.add(polyline);
+    });
+
+    LatLngBounds boundsLatLng;
+    if (originLatLng.latitude > destinationLatLng.latitude && originLatLng.longitude > destinationLatLng.longitude) {
+       boundsLatLng = LatLngBounds(southwest: destinationLatLng, northeast: originLatLng);
+    } else if (originLatLng.longitude > destinationLatLng.longitude) {
+       boundsLatLng = LatLngBounds(
+         southwest: LatLng(originLatLng.latitude, destinationLatLng.longitude),
+         northeast: LatLng(destinationLatLng.latitude, originLatLng.longitude)
+       );
+    } else if (originLatLng.latitude > destinationLatLng.latitude) {
+       boundsLatLng = LatLngBounds(
+         southwest: LatLng(destinationLatLng.latitude, originLatLng.longitude),
+         northeast: LatLng(originLatLng.latitude, destinationLatLng.longitude)
+       );
+    } else {
+       boundsLatLng = LatLngBounds(southwest: originLatLng, northeast: destinationLatLng);
+    }
+
+    newGoogleMapController!.animateCamera(CameraUpdate.newLatLngBounds(boundsLatLng, 65));
+
+    Marker originMarker = Marker(
+       markerId: const MarkerId("originID"),
+       infoWindow: InfoWindow(title: originPosition.locationName, snippet: "Origin"),
+       position: originLatLng,
+       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow),
+    );
+
+    Marker destinationMarker = Marker(
+       markerId: const MarkerId("destinationID"),
+       infoWindow: InfoWindow(title: destinationPosition.locationName, snippet: "Destination"),
+       position: destinationLatLng,
+       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+    );
+
+    setState(() {
+       markersSet.add(originMarker);
+       markersSet.add(destinationMarker);
+    });
+
+    Circle originCircle = Circle(
+       circleId: const CircleId("originID"),
+       fillColor: Colors.green,
+       radius: 12,
+       strokeWidth: 3,
+       strokeColor: Colors.white,
+       center: originLatLng,
+    );
+
+    Circle destinationCircle = Circle(
+       circleId: const CircleId("destinationID"),
+       fillColor: Colors.red,
+       radius: 12,
+       strokeWidth: 3,
+       strokeColor: Colors.white,
+       center: destinationLatLng,
+    );
+
+    setState(() {
+       circlesSet.add(originCircle);
+       circlesSet.add(destinationCircle);
+    });
+  }
+
   void locateUserPosition() async {
     loc.Location location = loc.Location();
 
@@ -258,6 +371,10 @@ class _MainScreenState extends State<MainScreen> {
     newGoogleMapController!.animateCamera(
       CameraUpdate.newCameraPosition(cameraPosition),
     );
+
+    if (!mounted) return;
+    await AssistantMethods.searchAddressForGeographicCoOrdinates(
+        position, context);
   }
 
   @override
@@ -360,11 +477,15 @@ class _MainScreenState extends State<MainScreen> {
       body: Stack(
         children: [
           GoogleMap(
+            padding: EdgeInsets.only(bottom: searchLocationContainerHeight),
             mapType: MapType.normal,
             myLocationEnabled: true,
             zoomGesturesEnabled: true,
             zoomControlsEnabled: true,
             initialCameraPosition: _kGooglePlex,
+            polylines: polyLineSet,
+            markers: markersSet,
+            circles: circlesSet,
             onMapCreated: (GoogleMapController controller) {
               _controllerGoogleMap.complete(controller);
               newGoogleMapController = controller;
@@ -442,24 +563,31 @@ class _MainScreenState extends State<MainScreen> {
                           color: Colors.white54,
                         ),
                         const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "From",
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "From",
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
                               ),
-                            ),
-                            Text(
-                              "My Current Location",
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 14,
+                              Consumer<AppInfo>(
+                                builder: (context, appInfo, _) {
+                                  return Text(
+                                    appInfo.userPickUpLocation?.locationName ?? "Getting Address...",
+                                    style: const TextStyle(
+                                      color: Colors.white54,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  );
+                                }
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -479,7 +607,7 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                         );
                         if (responseFromSearchScreen == "obtainedDropoff") {
-                          setState(() {});
+                          await drawPolyLineFromOriginToDestination();
                         }
                       },
                       child: Row(
@@ -489,30 +617,32 @@ class _MainScreenState extends State<MainScreen> {
                             color: Colors.white54,
                           ),
                           const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "To",
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "To",
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                              Consumer<AppInfo>(
-                                builder: (context, appInfo, _) {
-                                  return Text(
-                                    appInfo.userDropOffLocation?.locationName ??
-                                        "Where to go?",
-                                    style: const TextStyle(
-                                      color: Colors.white54,
-                                      fontSize: 14,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  );
-                                },
-                              ),
-                            ],
+                                Consumer<AppInfo>(
+                                  builder: (context, appInfo, _) {
+                                    return Text(
+                                      appInfo.userDropOffLocation?.locationName ??
+                                          "Where to go?",
+                                      style: const TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
